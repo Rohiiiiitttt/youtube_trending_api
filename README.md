@@ -1,56 +1,147 @@
-# YouTube Trending API
+# 🎬 YouTube Course Recommender & Transcript API
 
-This project is a FastAPI backend service that recommends educational YouTube videos based on a given topic.
+A FastAPI backend that recommends high-quality educational YouTube videos and provides transcripts for any video.
 
-It uses the YouTube Data API to fetch videos and ranks them based on engagement metrics such as views, likes, comments, and recency.
+---
 
-## Technologies Used
+## 🚀 Features
 
-- Python
-- FastAPI
-- YouTube Data API
-- Uvicorn
-- python-dotenv
+* 🔍 Search YouTube videos by topic
+* 🎯 Smart ranking using:
 
-## Installation
+  * Views
+  * Likes
+  * Comments
+  * Recency
+* 📚 Filters educational videos (Category 27)
+* 🧠 Transcript extraction:
 
-1. Clone the repository
+  * Primary: `youtube-transcript-api`
+  * Fallback: `yt-dlp`
+* 📄 Returns transcript as text
+* ⚡ FastAPI with interactive API docs
 
-git clone <repo-link>
+---
 
-2. Navigate to the project folder
+## 🏗️ Project Structure
 
-cd youtube_trending_api
+```
+project/
+│── main.py
+│── transcript_utils.py
+│── requirements.txt
+│── .env
+```
 
-3. Create virtual environment
+---
 
-python -m venv venv
+## ⚙️ Tech Stack
 
-4. Activate virtual environment
+* Python
+* FastAPI
+* YouTube Data API v3
+* youtube-transcript-api
+* yt-dlp
 
-Windows:
-venv\Scripts\activate
+---
 
-5. Install dependencies
+## 🔑 Setup Instructions
 
+### 1. Clone the repository
+
+```
+git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git
+cd YOUR_REPO
+```
+
+### 2. Install dependencies
+
+```
 pip install -r requirements.txt
+```
 
-## Environment Variables
+### 3. Add your API key
 
-Create a `.env` file and add:
+Create a `.env` file:
 
+```
 YOUTUBE_API_KEY=your_api_key_here
+```
 
-## Run the API
+---
 
+## ▶️ Run the Server
+
+```
 uvicorn main:app --reload
+```
 
-API will run at:
+Open in browser:
 
-http://127.0.0.1:8000
+```
+http://127.0.0.1:8000/docs
+```
 
-## API Endpoint
+---
 
-GET /recommend?topic=python lists
+## 📡 API Endpoints
 
-Returns ranked YouTube videos related to the topic.
+### 🔹 GET `/recommend`
+
+Returns ranked educational videos based on engagement and recency.
+
+**Query Parameters:**
+
+* `topic` (string) — required
+* `max_results` (int) — default: 5
+
+---
+
+### 🔹 GET `/transcript`
+
+Returns transcript of a YouTube video.
+
+**Query Parameters:**
+
+* `video_id` (string) — required
+
+---
+
+## 📦 Sample Response
+
+```
+{
+  "video_id": "abc123",
+  "source": "youtube_transcript_api",
+  "transcript": "This is the full transcript text of the video..."
+}
+```
+
+---
+
+## ⚠️ Notes
+
+* Some videos may not have transcripts available
+* Fallback using `yt-dlp` improves success rate
+* `.env` file is not included for security reasons
+
+---
+
+## 🌟 Future Improvements
+
+* Structured JSON transcript
+* AI-based summarization
+* Keyword extraction
+* Frontend integration
+
+---
+
+## 👨‍💻 Author
+
+Rohit Ghodake
+
+---
+
+## 📄 License
+
+This project is for educational purposes.

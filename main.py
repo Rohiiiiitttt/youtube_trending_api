@@ -4,11 +4,13 @@ from googleapiclient.discovery import build
 from datetime import datetime, timezone
 from dateutil import parser
 from dotenv import load_dotenv
+from youtube_transcript_api import YouTubeTranscriptApi, TranscriptsDisabled, NoTranscriptFound
 import os
 
-# Load environment variables
-load_dotenv()
+from transcript_utils import fetch_transcript_with_ytdlp, clean_transcript
 
+# Load env
+load_dotenv()
 API_KEY = os.getenv("YOUTUBE_API_KEY")
 
 if not API_KEY:
@@ -18,19 +20,17 @@ youtube = build("youtube", "v3", developerKey=API_KEY)
 
 app = FastAPI()
 
-# ------------------- CORS -------------------
-
+# CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],   # Allow all origins
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# --------------------------------------------
 
-
+# ---------------- VIDEO FETCH ---------------- #
 def fetch_videos(topic: str, max_results: int):
 
     search_request = youtube.search().list(
@@ -56,7 +56,6 @@ def fetch_videos(topic: str, max_results: int):
 
         for video in video_response["items"]:
 
-            # Filter only educational videos
             if video["snippet"].get("categoryId") != "27":
                 continue
 
@@ -71,7 +70,6 @@ def fetch_videos(topic: str, max_results: int):
             publish_date = parser.parse(published)
 
             days_old = (datetime.now(timezone.utc) - publish_date).days
-
             recency_factor = 1 / ((days_old + 1) ** 0.2)
 
             like_ratio = likes / views if views else 0
@@ -87,6 +85,7 @@ def fetch_videos(topic: str, max_results: int):
                 "comments": comments,
                 "score": score,
                 "published_date": published,
+                "video_id": video_id,
                 "url": f"https://www.youtube.com/watch?v={video_id}"
             })
 
@@ -106,21 +105,60 @@ def fetch_videos(topic: str, max_results: int):
     return sorted_results
 
 
+# ---------------- ROUTES ---------------- #
+
 @app.get("/")
-def root():
+async def root():
     return {"message": "YouTube Course Recommender API is running"}
 
 
 @app.get("/recommend")
-def recommend_videos(
-    topic: str = Query(..., description="Topic to search"),
-    max_results: int = Query(11, ge=1, le=50, description="Number of videos to fetch (1–50)")
+async def recommend_videos(
+    topic: str = Query(...),
+    max_results: int = Query(5, ge=1, le=50)
 ):
-
     videos = fetch_videos(topic, max_results)
 
     return {
         "topic": topic,
         "total_results_returned": len(videos),
         "results": videos
+    }
+
+
+@app.get("/transcript")
+async def get_transcript(video_id: str):
+
+    # ✅ Primary method
+    try:
+        transcript = YouTubeTranscriptApi.get_transcript(video_id)
+        text = " ".join([line["text"] for line in transcript])
+        text = clean_transcript(text)
+
+        return {
+            "video_id": video_id,
+            "source": "youtube_transcript_api",
+            "transcript": text
+        }
+
+    except (TranscriptsDisabled, NoTranscriptFound):
+        pass
+
+    except Exception as e:
+        print("Primary failed:", str(e))
+
+
+    # 🔁 Fallback method
+    text = fetch_transcript_with_ytdlp(video_id)
+
+    if text:
+        return {
+            "video_id": video_id,
+            "source": "yt-dlp",
+            "transcript": text
+        }
+
+    return {
+        "video_id": video_id,
+        "error": "Transcript not available"
     }
