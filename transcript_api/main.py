@@ -14,6 +14,7 @@ def root():
     return {"message": "Transcription API running"}
 
 
+# 🔥 AUTO MODE (best ranked video)
 @app.get("/transcribe")
 def transcribe(topic: str = Query(...)):
 
@@ -30,7 +31,7 @@ def transcribe(topic: str = Query(...)):
         title = video["title"]
         url = video["url"]
 
-        # 🔥 NEW FIXED METHOD
+        # Primary method
         try:
             api = YouTubeTranscriptApi()
             transcript = api.fetch(video_id)
@@ -48,7 +49,7 @@ def transcribe(topic: str = Query(...)):
         except Exception:
             pass
 
-        # 🔁 fallback
+        # Fallback
         text = fetch_transcript_with_ytdlp(video_id)
 
         if text:
@@ -59,6 +60,41 @@ def transcribe(topic: str = Query(...)):
                 "transcript": text
             }
 
+    return {"error": "No transcript found for any video"}
+
+
+# 🔥 USER CONTROL MODE (BEST FEATURE)
+@app.get("/transcribe_by_id")
+def transcribe_by_id(video_id: str = Query(...)):
+
+    # Primary method
+    try:
+        api = YouTubeTranscriptApi()
+        transcript = api.fetch(video_id)
+
+        text = " ".join([item.text for item in transcript])
+        text = clean_transcript(text)
+
+        return {
+            "video_id": video_id,
+            "source": "youtube_transcript_api",
+            "transcript": text
+        }
+
+    except Exception:
+        pass
+
+    # Fallback method
+    text = fetch_transcript_with_ytdlp(video_id)
+
+    if text:
+        return {
+            "video_id": video_id,
+            "source": "yt-dlp",
+            "transcript": text
+        }
+
     return {
-        "error": "No transcript found for any video"
+        "video_id": video_id,
+        "error": "Transcript not available"
     }
