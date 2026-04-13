@@ -1,68 +1,90 @@
-# 🎬 YouTube Course Recommender & Transcript API
+# 🚀 VidScribe AI
 
-A FastAPI backend that recommends high-quality educational YouTube videos and provides transcripts for any video.
-
----
-
-## 🚀 Features
-
-* 🔍 Search YouTube videos by topic
-* 🎯 Smart ranking using:
-
-  * Views
-  * Likes
-  * Comments
-  * Recency
-* 📚 Filters educational videos (Category 27)
-* 🧠 Transcript extraction:
-
-  * Primary: `youtube-transcript-api`
-  * Fallback: `yt-dlp`
-* 📄 Returns transcript as text
-* ⚡ FastAPI with interactive API docs
+VidScribe AI is a **microservices-based system** that intelligently fetches, ranks, and transcribes YouTube videos.
+It ensures high-quality transcript extraction even when subtitles are not directly available.
 
 ---
 
-## 🏗️ Project Structure
+## 🧠 Overview
+
+This project is designed to:
+
+* 🔍 Fetch YouTube videos based on a topic
+* 📊 Rank videos using a custom scoring algorithm
+* 🎯 Select the most relevant video
+* 📝 Generate transcripts using multiple fallback methods
+
+---
+
+## 🏗️ Architecture
 
 ```
-project/
-│── main.py
-│── transcript_utils.py
-│── requirements.txt
-│── .env
+User Request
+     ↓
+youtube_api (Fetch + Rank Videos)
+     ↓
+transcript_api (Select + Transcribe)
+     ↓
+JSON Response
 ```
 
 ---
 
-## ⚙️ Tech Stack
+## 📁 Project Structure
 
-* Python
-* FastAPI
-* YouTube Data API v3
-* youtube-transcript-api
-* yt-dlp
+```
+VidScribe-AI/
+│
+├── youtube_api/
+│   ├── main.py
+│   └── requirements.txt
+│
+├── transcript_api/
+│   ├── main.py
+│   ├── transcript_utils.py
+│   └── requirements.txt
+│
+├── .gitignore
+└── README.md
+```
 
 ---
 
-## 🔑 Setup Instructions
+## ⚙️ Setup Instructions
 
 ### 1. Clone the repository
 
 ```
-git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git
-cd YOUR_REPO
+git clone <your-repo-url>
+cd VidScribe-AI
 ```
 
-### 2. Install dependencies
+---
+
+### 2. Create virtual environment
 
 ```
+python -m venv venv
+venv\Scripts\activate
+```
+
+---
+
+### 3. Install dependencies
+
+```
+cd youtube_api
+pip install -r requirements.txt
+
+cd ../transcript_api
 pip install -r requirements.txt
 ```
 
-### 3. Add your API key
+---
 
-Create a `.env` file:
+## 🔑 Environment Variables
+
+Create a `.env` file inside `youtube_api/`:
 
 ```
 YOUTUBE_API_KEY=your_api_key_here
@@ -70,78 +92,98 @@ YOUTUBE_API_KEY=your_api_key_here
 
 ---
 
-## ▶️ Run the Server
+## ▶️ Running the Project
+
+### Terminal 1 (YouTube API)
 
 ```
-uvicorn main:app --reload
-```
-
-Open in browser:
-
-```
-http://127.0.0.1:8000/docs
+cd youtube_api
+uvicorn main:app --port 8000
 ```
 
 ---
 
-## 📡 API Endpoints
-
-### 🔹 GET `/recommend`
-
-Returns ranked educational videos based on engagement and recency.
-
-**Query Parameters:**
-
-* `topic` (string) — required
-* `max_results` (int) — default: 5
-
----
-
-### 🔹 GET `/transcript`
-
-Returns transcript of a YouTube video.
-
-**Query Parameters:**
-
-* `video_id` (string) — required
-
----
-
-## 📦 Sample Response
+### Terminal 2 (Transcription API)
 
 ```
+cd transcript_api
+uvicorn main:app --port 8001
+```
+
+---
+
+## 🌐 API Endpoints
+
+### 🔹 Get Ranked Videos
+
+```
+GET /recommend?topic=python
+```
+
+---
+
+### 🔹 Get Transcript
+
+```
+GET /transcribe?topic=python
+```
+
+---
+
+## ⚡ Features
+
+* 📊 **Custom Ranking Algorithm**
+
+  * Based on likes, comments, views, and recency
+
+* 🔁 **Smart Fallback Mechanism**
+
+  * Uses youtube-transcript-api
+  * Falls back to yt-dlp if needed
+
+* 🧠 **Intelligent Video Selection**
+
+  * Chooses best video dynamically
+
+* ⚙️ **Microservices Architecture**
+
+  * Separate APIs for scalability
+
+---
+
+## 🛠️ Tech Stack
+
+* FastAPI
+* YouTube Data API v3
+* youtube-transcript-api
+* yt-dlp
+* Python
+
+---
+
+## 🎯 Example Output
+
+```json
 {
-  "video_id": "abc123",
+  "title": "Python Full Course for Beginners",
+  "video_url": "https://www.youtube.com/watch?v=...",
   "source": "youtube_transcript_api",
-  "transcript": "This is the full transcript text of the video..."
+  "transcript": "..."
 }
 ```
 
 ---
 
-## ⚠️ Notes
+## 📌 Future Improvements
 
-* Some videos may not have transcripts available
-* Fallback using `yt-dlp` improves success rate
-* `.env` file is not included for security reasons
-
----
-
-## 🌟 Future Improvements
-
-* Structured JSON transcript
-* AI-based summarization
-* Keyword extraction
-* Frontend integration
+* 🧠 LLM-based summarization
+* ⏱ Timestamp segmentation
+* 🌐 Frontend UI integration
+* ☁️ Deployment (Docker / Cloud)
 
 ---
 
 ## 👨‍💻 Author
 
-Rohit Ghodake
+Developed as part of a production-style backend system for intelligent video content processing.
 
----
-
-## 📄 License
-
-This project is for educational purposes.
