@@ -1,18 +1,19 @@
 # 🚀 VidScribe AI
 
 VidScribe AI is a **microservices-based system** that intelligently fetches, ranks, and transcribes YouTube videos.
-It ensures high-quality transcript extraction even when subtitles are not directly available.
+It provides a flexible pipeline where users can either get the best video automatically or select any video manually for transcription.
 
 ---
 
 ## 🧠 Overview
 
-This project is designed to:
+This system is designed to:
 
 * 🔍 Fetch YouTube videos based on a topic
 * 📊 Rank videos using a custom scoring algorithm
-* 🎯 Select the most relevant video
-* 📝 Generate transcripts using multiple fallback methods
+* 🎯 Select the best video automatically
+* 📝 Generate transcripts with fallback support
+* 🎛 Allow users to choose any video for transcription
 
 ---
 
@@ -120,13 +121,40 @@ uvicorn main:app --port 8001
 GET /recommend?topic=python
 ```
 
+Returns a list of ranked videos based on custom scoring.
+
 ---
 
-### 🔹 Get Transcript
+### 🔹 Auto Transcript (Best Video)
 
 ```
 GET /transcribe?topic=python
 ```
+
+* Automatically selects the best-ranked video
+* Returns transcript with fallback support
+
+---
+
+### 🔹 Transcript by Video ID (User Controlled) 🔥
+
+```
+GET /transcribe_by_id?video_id=VIDEO_ID
+```
+
+* Allows user to select any video
+* Returns transcript for that specific video
+* Provides maximum flexibility
+
+---
+
+## 🎯 Workflow
+
+1. Call `/recommend` to get list of videos
+2. Select a `video_id`
+3. Call `/transcribe_by_id` to get transcript
+
+👉 This decouples video selection from transcription and makes the system user-driven.
 
 ---
 
@@ -141,9 +169,10 @@ GET /transcribe?topic=python
   * Uses youtube-transcript-api
   * Falls back to yt-dlp if needed
 
-* 🧠 **Intelligent Video Selection**
+* 🎯 **Flexible Video Selection**
 
-  * Chooses best video dynamically
+  * Automatic (best video)
+  * Manual (video_id आधारित selection)
 
 * ⚙️ **Microservices Architecture**
 
@@ -163,7 +192,7 @@ GET /transcribe?topic=python
 
 ## 🎯 Example Output
 
-```json
+```
 {
   "title": "Python Full Course for Beginners",
   "video_url": "https://www.youtube.com/watch?v=...",
@@ -187,3 +216,8 @@ GET /transcribe?topic=python
 
 Developed as part of a production-style backend system for intelligent video content processing.
 
+---
+
+## 📄 License
+
+This project is for educational and development purposes.
