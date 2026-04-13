@@ -1,15 +1,10 @@
 from fastapi import FastAPI, Query
-from fastapi.middleware.cors import CORSMiddleware
 from googleapiclient.discovery import build
 from datetime import datetime, timezone
 from dateutil import parser
 from dotenv import load_dotenv
-from youtube_transcript_api import YouTubeTranscriptApi, TranscriptsDisabled, NoTranscriptFound
 import os
 
-from transcript_utils import fetch_transcript_with_ytdlp, clean_transcript
-
-# Load env
 load_dotenv()
 API_KEY = os.getenv("YOUTUBE_API_KEY")
 
@@ -20,19 +15,8 @@ youtube = build("youtube", "v3", developerKey=API_KEY)
 
 app = FastAPI()
 
-# CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
-
-# ---------------- VIDEO FETCH ---------------- #
 def fetch_videos(topic: str, max_results: int):
-
     search_request = youtube.search().list(
         q=topic,
         part="snippet",
@@ -55,7 +39,6 @@ def fetch_videos(topic: str, max_results: int):
         video_response = video_request.execute()
 
         for video in video_response["items"]:
-
             if video["snippet"].get("categoryId") != "27":
                 continue
 
@@ -79,86 +62,30 @@ def fetch_videos(topic: str, max_results: int):
 
             results.append({
                 "title": video["snippet"]["title"],
-                "channel": video["snippet"]["channelTitle"],
-                "views": views,
-                "likes": likes,
-                "comments": comments,
-                "score": score,
-                "published_date": published,
                 "video_id": video_id,
-                "url": f"https://www.youtube.com/watch?v={video_id}"
+                "url": f"https://www.youtube.com/watch?v={video_id}",
+                "score": score
             })
 
     sorted_results = sorted(results, key=lambda x: x["score"], reverse=True)
 
-    if sorted_results:
-        max_score = sorted_results[0]["score"]
-
-        for video in sorted_results:
-            percentage_score = (video["score"] / max_score) * 100 if max_score > 0 else 0
-            video["score_percentage"] = round(percentage_score, 2)
-            video["score"] = round(video["score"], 6)
-
     for idx, video in enumerate(sorted_results, start=1):
         video["rank"] = idx
+        video["score"] = round(video["score"], 6)
 
     return sorted_results
 
 
-# ---------------- ROUTES ---------------- #
-
 @app.get("/")
-async def root():
-    return {"message": "YouTube Course Recommender API is running"}
+def root():
+    return {"message": "YouTube API running"}
 
 
 @app.get("/recommend")
-async def recommend_videos(
-    topic: str = Query(...),
-    max_results: int = Query(5, ge=1, le=50)
-):
+def recommend_videos(topic: str = Query(...), max_results: int = 5):
     videos = fetch_videos(topic, max_results)
 
     return {
         "topic": topic,
-        "total_results_returned": len(videos),
         "results": videos
-    }
-
-
-@app.get("/transcript")
-async def get_transcript(video_id: str):
-
-    # ✅ Primary method
-    try:
-        transcript = YouTubeTranscriptApi.get_transcript(video_id)
-        text = " ".join([line["text"] for line in transcript])
-        text = clean_transcript(text)
-
-        return {
-            "video_id": video_id,
-            "source": "youtube_transcript_api",
-            "transcript": text
-        }
-
-    except (TranscriptsDisabled, NoTranscriptFound):
-        pass
-
-    except Exception as e:
-        print("Primary failed:", str(e))
-
-
-    # 🔁 Fallback method
-    text = fetch_transcript_with_ytdlp(video_id)
-
-    if text:
-        return {
-            "video_id": video_id,
-            "source": "yt-dlp",
-            "transcript": text
-        }
-
-    return {
-        "video_id": video_id,
-        "error": "Transcript not available"
     }

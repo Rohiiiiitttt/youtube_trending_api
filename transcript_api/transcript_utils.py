@@ -5,8 +5,8 @@ import re
 
 
 def clean_transcript(text: str):
-    text = re.sub(r"\[.*?\]", "", text)   # remove [Music]
-    text = re.sub(r"\s+", " ", text)      # fix spacing
+    text = re.sub(r"\[.*?\]", "", text)
+    text = re.sub(r"\s+", " ", text)
     return text.strip()
 
 
@@ -15,13 +15,13 @@ def fetch_transcript_with_ytdlp(video_id: str):
     output_path = f"temp_{video_id}"
 
     ydl_opts = {
-        'skip_download': True,
-        'writesubtitles': True,
-        'writeautomaticsub': True,
-        'subtitleslangs': ['en'],
-        'subtitlesformat': 'json3',
-        'outtmpl': output_path,
-        'quiet': True
+        "skip_download": True,
+        "writesubtitles": True,
+        "writeautomaticsub": True,
+        "subtitleslangs": ["en"],
+        "subtitlesformat": "json3",
+        "outtmpl": output_path,
+        "quiet": True
     }
 
     try:
@@ -37,6 +37,7 @@ def fetch_transcript_with_ytdlp(video_id: str):
             data = json.load(f)
 
         transcript = []
+
         for event in data.get("events", []):
             if "segs" in event:
                 for seg in event["segs"]:
@@ -45,6 +46,7 @@ def fetch_transcript_with_ytdlp(video_id: str):
         os.remove(file_path)
 
         final_text = " ".join(transcript)
+
         return clean_transcript(final_text)
 
     except Exception:
